@@ -8,22 +8,18 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-// Ensure data directory exists for SQLite files
-var dataDir = Path.Combine(builder.Environment.ContentRootPath, "App_Data");
-Directory.CreateDirectory(dataDir);
-
-var sourceDbPath = Path.Combine(dataDir, "source.db");
-var targetDbPath = Path.Combine(dataDir, "target.db");
-var mappingsDbPath = Path.Combine(dataDir, "mappings.db");
-
+// Configure SQL Server connections
 builder.Services.AddDbContext<SourceDbContext>(options =>
-    options.UseSqlite($"Data Source={sourceDbPath}"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("SourceDb"),
+        sql => sql.EnableRetryOnFailure()));
 
 builder.Services.AddDbContext<TargetDbContext>(options =>
-    options.UseSqlite($"Data Source={targetDbPath}"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("TargetDb"),
+        sql => sql.EnableRetryOnFailure()));
 
 builder.Services.AddDbContext<EntityMappingsDbContext>(options =>
-    options.UseSqlite($"Data Source={mappingsDbPath}"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("MappingsDb"),
+        sql => sql.EnableRetryOnFailure()));
 
 var app = builder.Build();
 
