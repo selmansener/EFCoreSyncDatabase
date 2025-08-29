@@ -201,12 +201,30 @@ public static class GenericSyncService
     {
         var table = et.GetTableName();
         var schema = et.GetSchema() ?? "dbo";
-        await using var tx = await target.Database.BeginTransactionAsync(ct);
-        await target.Database.ExecuteSqlRawAsync($"SET IDENTITY_INSERT [{schema}].[{table}] ON;", ct);
-        target.Add(instance);
-        await target.SaveChangesAsync(ct);
-        await target.Database.ExecuteSqlRawAsync($"SET IDENTITY_INSERT [{schema}].[{table}] OFF;", ct);
-        await tx.CommitAsync(ct);
+        var strategy = target.Database.CreateExecutionStrategy();
+
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using var tx = await target.Database.BeginTransactionAsync(ct);
+            try
+            {
+                await target.Database.ExecuteSqlRawAsync($"SET IDENTITY_INSERT [{schema}].[{table}] ON;", ct);
+                target.Add(instance);
+                await target.SaveChangesAsync(ct);
+                await target.Database.ExecuteSqlRawAsync($"SET IDENTITY_INSERT [{schema}].[{table}] OFF;", ct);
+                await tx.CommitAsync(ct);
+            }
+            catch
+            {
+                try
+                {
+                    await target.Database.ExecuteSqlRawAsync($"SET IDENTITY_INSERT [{schema}].[{table}] OFF;", ct);
+                }
+                catch { /* best effort */ }
+                await tx.RollbackAsync(ct);
+                throw;
+            }
+        });
     }
 
     private static async Task AddOrUpdateMappingAsync(EntityMappingsDbContext mappings, string entityName, int sourceId, int targetId, CancellationToken ct)
@@ -255,4 +273,3 @@ public static class GenericSyncService
         return null;
     }
 }
-
