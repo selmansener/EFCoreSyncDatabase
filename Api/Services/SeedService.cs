@@ -60,6 +60,7 @@ public static class SeedService
         var customerEmailToTargetId = await target.Customers.AsNoTracking().ToDictionaryAsync(c => c.Email, c => c.Id, ct);
 
         var mappingRows = new List<EntityMapping>();
+        var now = DateTime.UtcNow;
 
         foreach (var sku in productSkuToTargetId.Keys)
         {
@@ -70,7 +71,8 @@ public static class SeedService
                     SourceId = sId,
                     TargetId = productSkuToTargetId[sku],
                     EntityName = "Product",
-                    DatabaseName = "SalesDb"
+                    DatabaseName = "SalesDb",
+                    LastSyncDate = now
                 });
             }
         }
@@ -84,7 +86,8 @@ public static class SeedService
                     SourceId = sId,
                     TargetId = customerEmailToTargetId[email],
                     EntityName = "Customer",
-                    DatabaseName = "SalesDb"
+                    DatabaseName = "SalesDb",
+                    LastSyncDate = now
                 });
             }
         }
@@ -169,4 +172,3 @@ public static class SeedService
         await ctx.SaveChangesAsync(ct);
     }
 }
-

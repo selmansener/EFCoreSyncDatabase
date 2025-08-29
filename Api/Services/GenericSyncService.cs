@@ -233,11 +233,12 @@ public static class GenericSyncService
             .FirstOrDefaultAsync(m => m.SourceId == sourceId && m.EntityName == entityName && m.DatabaseName == DatabaseName, ct);
         if (existing is null)
         {
-            mappings.EntityMappings.Add(new EntityMapping { SourceId = sourceId, TargetId = targetId, EntityName = entityName, DatabaseName = DatabaseName });
+            mappings.EntityMappings.Add(new EntityMapping { SourceId = sourceId, TargetId = targetId, EntityName = entityName, DatabaseName = DatabaseName, LastSyncDate = DateTime.UtcNow });
         }
         else
         {
             existing.TargetId = targetId;
+            existing.LastSyncDate = DateTime.UtcNow;
             mappings.EntityMappings.Update(existing);
         }
         await mappings.SaveChangesAsync(ct);

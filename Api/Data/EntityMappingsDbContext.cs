@@ -19,6 +19,7 @@ public class EntityMappingsDbContext : DbContext
             entity.ToTable("EntityMappings");
             entity.Property(p => p.EntityName).IsRequired().HasMaxLength(200);
             entity.Property(p => p.DatabaseName).IsRequired().HasMaxLength(200);
+            entity.Property(p => p.LastSyncDate).IsRequired();
             entity.HasKey(p => new { p.SourceId, p.TargetId, p.EntityName, p.DatabaseName });
         });
     }
@@ -30,5 +31,5 @@ public class EntityMapping
     public int TargetId { get; set; }
     public string EntityName { get; set; } = string.Empty;
     public string DatabaseName { get; set; } = string.Empty;
+    public DateTime LastSyncDate { get; set; }
 }
-
