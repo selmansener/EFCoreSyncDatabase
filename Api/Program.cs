@@ -1,12 +1,14 @@
 using Api.Data;
 using Api.Services;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddControllers();
 
 // Configure SQL Server connections
 builder.Services.AddDbContext<SourceDbContext>(options =>
@@ -27,17 +29,16 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(options =>
+    {
+        options.Title = "EFCore Sync API";
+        options.Theme = ScalarTheme.Kepler;
+    });
 }
 
 app.UseHttpsRedirection();
 
-// Seed endpoint: resets and repopulates all three databases
-app.MapPost("/seed", async (IServiceProvider sp) =>
-{
-    var result = await SeedService.ResetAndSeedAsync(sp);
-    return Results.Ok(result);
-})
-.WithName("SeedDatabases");
+app.MapControllers();
 
 app.Run();
 
